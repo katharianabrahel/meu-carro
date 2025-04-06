@@ -1,22 +1,72 @@
 package com.example.meucarro.ui.screens
 
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.meucarro.models.LoginResponse
+import com.example.meucarro.models.LoginResquest
+import com.example.meucarro.services.http.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 @Composable
 fun LoginScreen(onSignUpClick: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    fun loginUser(context: Context, email: String, password: String) {
+        val loginRequest = LoginResquest(email, password)
+        val call: Call<LoginResponse> = RetrofitClient.instance.login(loginRequest)
+
+        call.enqueue(object : Callback<LoginResponse> {
+            override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                if (response.isSuccessful) {
+                    val loginResponse = response.body()
+                    val token = loginResponse?.token
+                    if (token != null) {
+                        val sharedPreferences: SharedPreferences =
+                            context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+                        val editor: SharedPreferences.Editor = sharedPreferences.edit()
+                        editor.putString("auth_token", token)
+                        editor.apply()
+                    }
+                    // Handle the response
+                } else {
+                    // Handle the error
+                }
+            }
+
+            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                // Handle the failure
+            }
+        })
+    }
 
     Column(
         modifier = Modifier
@@ -38,7 +88,7 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
                     .padding(vertical = 12.dp)
             )
 
-            // Título
+            // Title
             Text(
                 text = "Bem vindo!",
                 fontSize = 28.sp,
@@ -48,7 +98,7 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
                 modifier = Modifier.padding(vertical = 16.dp)
             )
 
-            // Campo de Email
+            // Email Field
             InputField(
                 label = "Email",
                 placeholder = "Digite seu email",
@@ -56,7 +106,7 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
                 onValueChange = { email = it }
             )
 
-            // Campo de Senha
+            // Password Field
             InputField(
                 label = "Password",
                 placeholder = "Digite sua senha",
@@ -66,10 +116,10 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
             )
         }
 
-        // Botão Login
+        // Login Button
         Column(modifier = Modifier.padding(16.dp)) {
             Button(
-                onClick = { /* ação de login */ },
+                onClick = { loginUser(context, email, password) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
@@ -84,7 +134,7 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
                 )
             }
 
-            // Link para criar conta
+            // Sign Up Link
             TextButton(
                 onClick = onSignUpClick,
                 modifier = Modifier.fillMaxWidth()
@@ -101,5 +151,3 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
         }
     }
 }
-
-
