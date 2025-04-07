@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -99,20 +101,24 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
             )
 
             // Email Field
-            InputField(
-                label = "Email",
-                placeholder = "Digite seu email",
+            OutlinedTextField(
                 value = email,
-                onValueChange = { email = it }
+                onValueChange = { email = it },
+                label = { Text("Endereço de email") },
+                placeholder = { Text("Digite seu endereço de email") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
             )
-
-            // Password Field
-            InputField(
-                label = "Password",
-                placeholder = "Digite sua senha",
+            OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                isPassword = true
+                label = { Text("Criar senha") },
+                placeholder = { Text("Escolha sua senha") },
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
             )
         }
 
