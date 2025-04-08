@@ -9,19 +9,23 @@ import com.example.meucarro.models.SyncMaintenceResponse
 import com.example.meucarro.models.UserRequest
 import com.example.meucarro.models.UserResponse
 import retrofit2.Call
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface ApiService {
+
     @POST("auth/login")
-    fun login(login: LoginResquest): Call<LoginResponse>
+    fun login(@Body login: LoginResquest): Call<LoginResponse>
 
     @POST("users")
-    fun createUser(user: UserRequest): Call<UserResponse>
+    fun createUser(@Body user: UserRequest): Call<UserResponse>
 
     @POST("maintences/sync")
-    fun syncMaintence(sync: List<SyncMaintenceRequest>): Call<SyncMaintenceResponse>
+    fun syncMaintence(@Body sync: List<SyncMaintenceRequest>): Call<SyncMaintenceResponse>
 
+    // Supondo que MaintenceRequest contenha um ID ou outro campo simples, adapte conforme necessário
     @GET("maintences/sync")
-    fun getSyncMaintence(sync: MaintenceRequest): Call<List<MaintenceResponse>>
+    fun getSyncMaintence(@Query("id") id: String): Call<List<MaintenceResponse>>
 }
