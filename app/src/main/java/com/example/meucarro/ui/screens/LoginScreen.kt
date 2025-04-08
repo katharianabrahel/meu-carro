@@ -75,7 +75,7 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
             .fillMaxSize()
             .background(Color.White)
             .padding(vertical = 16.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.SpaceEvenly
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             // TopBar
