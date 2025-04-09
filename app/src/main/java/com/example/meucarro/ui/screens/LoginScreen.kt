@@ -37,12 +37,15 @@ import retrofit2.Callback
 import retrofit2.Response
 
 @Composable
-fun LoginScreen(onSignUpClick: () -> Unit) {
+fun LoginScreen(
+    onSignUpClick: () -> Unit,
+    onLoginSuccess: () -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val context = LocalContext.current
 
-    fun loginUser(context: Context, email: String, password: String) {
+    fun loginUser(context: Context, email: String, password: String, onLoginSuccess: () -> Unit) {
         val loginRequest = LoginResquest(email, password)
         val call: Call<LoginResponse> = RetrofitClient.instance.login(loginRequest)
 
@@ -57,10 +60,8 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
                         val editor: SharedPreferences.Editor = sharedPreferences.edit()
                         editor.putString("auth_token", token)
                         editor.apply()
+                        onLoginSuccess()
                     }
-                    // Handle the response
-                } else {
-                    // Handle the error
                 }
             }
 
@@ -69,6 +70,7 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
             }
         })
     }
+
 
     Column(
         modifier = Modifier
@@ -125,7 +127,7 @@ fun LoginScreen(onSignUpClick: () -> Unit) {
         // Login Button
         Column(modifier = Modifier.padding(16.dp)) {
             Button(
-                onClick = { loginUser(context, email, password) },
+                onClick = { loginUser(context, email, password, onLoginSuccess) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),

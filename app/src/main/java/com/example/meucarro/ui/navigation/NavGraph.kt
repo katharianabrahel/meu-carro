@@ -10,7 +10,7 @@ import com.example.meucarro.ui.screens.SignUpScreen
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = "home") {
+    NavHost(navController = navController, startDestination = "login") {
             composable("home") {
             HomePage(navController)
             }
@@ -18,6 +18,11 @@ fun AppNavGraph(navController: NavHostController) {
             composable("login") {
             LoginScreen(onSignUpClick = {
                 navController.navigate("signup")
+            },
+                onLoginSuccess = {
+                navController.navigate("home") {
+                    popUpTo("login") { inclusive = true }
+                }
             })
         }
         composable("signup") {
