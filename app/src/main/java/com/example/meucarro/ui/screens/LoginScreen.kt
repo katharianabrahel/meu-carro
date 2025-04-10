@@ -1,7 +1,6 @@
 package com.example.meucarro.ui.screens
 
-import android.content.Context
-import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,12 +29,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.meucarro.models.LoginResponse
-import com.example.meucarro.models.LoginResquest
+import com.example.meucarro.services.http.auth.dto.request.LoginResquest
+import com.example.meucarro.services.database.user_preferences.UserPreferences
 import com.example.meucarro.services.http.RetrofitClient
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import com.example.meucarro.services.http.auth.AuthService
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -44,33 +43,8 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val context = LocalContext.current
-
-    fun loginUser(context: Context, email: String, password: String, onLoginSuccess: () -> Unit) {
-        val loginRequest = LoginResquest(email, password)
-        val call: Call<LoginResponse> = RetrofitClient.instance.login(loginRequest)
-
-        call.enqueue(object : Callback<LoginResponse> {
-            override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
-                if (response.isSuccessful) {
-                    val loginResponse = response.body()
-                    val token = loginResponse?.token
-                    if (token != null) {
-                        val sharedPreferences: SharedPreferences =
-                            context.getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
-                        val editor: SharedPreferences.Editor = sharedPreferences.edit()
-                        editor.putString("auth_token", token)
-                        editor.apply()
-                        onLoginSuccess()
-                    }
-                }
-            }
-
-            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                // Handle the failure
-            }
-        })
-    }
-
+    val coroutineScope = rememberCoroutineScope()
+    val userPrefs = remember { UserPreferences(context) }
 
     Column(
         modifier = Modifier
@@ -80,7 +54,6 @@ fun LoginScreen(
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // TopBar
             Text(
                 text = "Meu Carro",
                 fontSize = 18.sp,
@@ -92,7 +65,6 @@ fun LoginScreen(
                     .padding(vertical = 12.dp)
             )
 
-            // Title
             Text(
                 text = "Bem vindo!",
                 fontSize = 28.sp,
@@ -102,7 +74,6 @@ fun LoginScreen(
                 modifier = Modifier.padding(vertical = 16.dp)
             )
 
-            // Email Field
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -112,11 +83,12 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .padding(8.dp)
             )
+
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Criar senha") },
-                placeholder = { Text("Escolha sua senha") },
+                label = { Text("Senha") },
+                placeholder = { Text("Digite sua senha") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -124,10 +96,26 @@ fun LoginScreen(
             )
         }
 
-        // Login Button
         Column(modifier = Modifier.padding(16.dp)) {
             Button(
-                onClick = { loginUser(context, email, password, onLoginSuccess) },
+                onClick = {
+                    coroutineScope.launch {
+                        try {
+                            val api = RetrofitClient.createService(AuthService::class.java, context)
+                            val response = api.login(LoginResquest(email, password))
+
+                            // salva token e userId
+                            userPrefs.saveUser(response.token, response.user.id)
+
+                            onLoginSuccess()
+
+                        } catch (e: Exception) {
+                            Toast
+                                .makeText(context, "Erro ao fazer login", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
@@ -142,7 +130,6 @@ fun LoginScreen(
                 )
             }
 
-            // Sign Up Link
             TextButton(
                 onClick = onSignUpClick,
                 modifier = Modifier.fillMaxWidth()

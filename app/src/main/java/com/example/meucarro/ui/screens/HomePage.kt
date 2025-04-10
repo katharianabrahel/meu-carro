@@ -20,6 +20,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.meucarro.services.http.RetrofitClient
+import com.example.meucarro.services.http.maintenance.MaintenanceService
 import com.example.meucarro.ui.theme.*
 import java.util.*
 
@@ -29,8 +31,33 @@ fun HomePage(navController: NavHostController) {
     var showDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     val notes = remember { mutableStateListOf<Note>() }
+    val context = LocalContext.current
     var noteToEdit by remember { mutableStateOf<Note?>(null) }
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
+
+
+    LaunchedEffect(Unit) {
+        try {
+            val service = RetrofitClient.createService(
+                MaintenanceService::class.java,
+                context
+            )
+            val response = service.getMaintenances()
+            notes.clear()
+            notes.addAll(response.map {
+                Note(
+                    name = it.name,
+                    description = it.description,
+                    odometer = it.odometer,
+                    performedAt = it.performedAt,
+                    nextDueAt = it.nextDueAt
+                )
+            })
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // você pode exibir um Toast ou Snackbar aqui
+        }
+    }
 
     Scaffold(
         containerColor = FundoClaro,
@@ -57,9 +84,11 @@ fun HomePage(navController: NavHostController) {
             modifier = Modifier.padding(padding),
             color = FundoClaro
         ) {
-            LazyColumn(modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
                 items(notes) { note ->
                     Card(
                         modifier = Modifier
@@ -69,23 +98,38 @@ fun HomePage(navController: NavHostController) {
                         elevation = CardDefaults.cardElevation(4.dp)
                     ) {
                         Column(Modifier.padding(16.dp)) {
-                            Text(text = note.name, style = MaterialTheme.typography.titleMedium, color = TextoPrincipal)
+                            Text(
+                                text = note.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = TextoPrincipal
+                            )
                             Text(text = note.description, color = TextoSecundario)
                             Text(text = "Odômetro: ${note.odometer} km", color = TextoSecundario)
-                            Text(text = "Realizado em: ${note.performedAt}", color = TextoSecundario)
+                            Text(
+                                text = "Realizado em: ${note.performedAt}",
+                                color = TextoSecundario
+                            )
                             Text(text = "Próxima em: ${note.nextDueAt}", color = TextoSecundario)
                             Row(modifier = Modifier.align(Alignment.End)) {
                                 IconButton(onClick = {
                                     noteToEdit = note
                                     showDialog = true
                                 }) {
-                                    Icon(Icons.Default.Edit, contentDescription = "Editar", tint = AzulPrincipal)
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = "Editar",
+                                        tint = AzulPrincipal
+                                    )
                                 }
                                 IconButton(onClick = {
                                     noteToDelete = note
                                     showDeleteDialog = true
                                 }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Excluir", tint = TextoSecundario)
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Excluir",
+                                        tint = TextoSecundario
+                                    )
                                 }
                             }
                         }
@@ -117,7 +161,13 @@ fun HomePage(navController: NavHostController) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Confirmar exclusão", color = TextoPrincipal) },
-            text = { Text("Tem certeza que deseja excluir esta nota?", color = TextoPrincipal, fontSize = 18.sp) },
+            text = {
+                Text(
+                    "Tem certeza que deseja excluir esta nota?",
+                    color = TextoPrincipal,
+                    fontSize = 18.sp
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     notes.remove(noteToDelete)
@@ -143,14 +193,25 @@ fun HomePage(navController: NavHostController) {
 fun CreateNoteDialog(onDismiss: () -> Unit, onSave: (Note) -> Unit, noteToEdit: Note? = null) {
     var name by remember { mutableStateOf(TextFieldValue(noteToEdit?.name ?: "")) }
     var description by remember { mutableStateOf(TextFieldValue(noteToEdit?.description ?: "")) }
-    var odometer by remember { mutableStateOf(TextFieldValue(noteToEdit?.odometer?.toString() ?: "")) }
+    var odometer by remember {
+        mutableStateOf(
+            TextFieldValue(
+                noteToEdit?.odometer?.toString() ?: ""
+            )
+        )
+    }
     var performedAt by remember { mutableStateOf(noteToEdit?.performedAt ?: "") }
     var nextDueAt by remember { mutableStateOf(noteToEdit?.nextDueAt ?: "") }
     val context = LocalContext.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (noteToEdit != null) "Editar Nota" else "Nova Nota", color = TextoPrincipal) },
+        title = {
+            Text(
+                if (noteToEdit != null) "Editar Nota" else "Nova Nota",
+                color = TextoPrincipal
+            )
+        },
         text = {
             Column {
                 OutlinedTextField(
@@ -194,9 +255,19 @@ fun CreateNoteDialog(onDismiss: () -> Unit, onSave: (Note) -> Unit, noteToEdit: 
                     Text("Data realizada: $performedAt", color = TextoPrincipal)
                     IconButton(onClick = {
                         val c = Calendar.getInstance()
-                        DatePickerDialog(context, { _, y, m, d -> performedAt = "$d/${m + 1}/$y" }, c[Calendar.YEAR], c[Calendar.MONTH], c[Calendar.DAY_OF_MONTH]).show()
+                        DatePickerDialog(
+                            context,
+                            { _, y, m, d -> performedAt = "$d/${m + 1}/$y" },
+                            c[Calendar.YEAR],
+                            c[Calendar.MONTH],
+                            c[Calendar.DAY_OF_MONTH]
+                        ).show()
                     }) {
-                        Icon(Icons.Default.DateRange, contentDescription = "Data realizada", tint = AzulPrincipal)
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = "Data realizada",
+                            tint = AzulPrincipal
+                        )
                     }
                 }
                 Row(
@@ -207,9 +278,19 @@ fun CreateNoteDialog(onDismiss: () -> Unit, onSave: (Note) -> Unit, noteToEdit: 
                     Text("Próxima data: $nextDueAt", color = TextoPrincipal)
                     IconButton(onClick = {
                         val c = Calendar.getInstance()
-                        DatePickerDialog(context, { _, y, m, d -> nextDueAt = "$d/${m + 1}/$y" }, c[Calendar.YEAR], c[Calendar.MONTH], c[Calendar.DAY_OF_MONTH]).show()
+                        DatePickerDialog(
+                            context,
+                            { _, y, m, d -> nextDueAt = "$d/${m + 1}/$y" },
+                            c[Calendar.YEAR],
+                            c[Calendar.MONTH],
+                            c[Calendar.DAY_OF_MONTH]
+                        ).show()
                     }) {
-                        Icon(Icons.Default.DateRange, contentDescription = "Próxima data", tint = AzulPrincipal)
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = "Próxima data",
+                            tint = AzulPrincipal
+                        )
                     }
                 }
             }

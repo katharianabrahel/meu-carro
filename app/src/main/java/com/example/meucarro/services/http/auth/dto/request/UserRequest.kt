@@ -1,4 +1,4 @@
-package com.example.meucarro.models
+package com.example.meucarro.services.http.auth.dto.request
 
 data class UserRequest(
     val name: String,
