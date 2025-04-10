@@ -26,6 +26,7 @@ import com.example.meucarro.ui.theme.*
 import androidx.compose.material.icons.filled.ExitToApp
 import com.example.meucarro.services.database.user_preferences.UserPreferences
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,7 +41,6 @@ fun HomePage(navController: NavHostController) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     var noteToEdit by remember { mutableStateOf<Note?>(null) }
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
-
 
     LaunchedEffect(Unit) {
         try {
@@ -61,7 +61,6 @@ fun HomePage(navController: NavHostController) {
             })
         } catch (e: Exception) {
             e.printStackTrace()
-            // você pode exibir um Toast ou Snackbar aqui
         }
     }
 
@@ -123,10 +122,13 @@ fun HomePage(navController: NavHostController) {
                             Text(text = note.description, color = TextoSecundario)
                             Text(text = "Odômetro: ${note.odometer} km", color = TextoSecundario)
                             Text(
-                                text = "Realizado em: ${note.performedAt}",
+                                text = "Realizado em: ${formatFromIsoDate(note.performedAt)}",
                                 color = TextoSecundario
                             )
-                            Text(text = "Próxima em: ${note.nextDueAt}", color = TextoSecundario)
+                            Text(
+                                text = "Próxima em: ${formatFromIsoDate(note.nextDueAt)}",
+                                color = TextoSecundario
+                            )
                             Row(modifier = Modifier.align(Alignment.End)) {
                                 IconButton(onClick = {
                                     noteToEdit = note
@@ -295,7 +297,7 @@ fun CreateNoteDialog(onDismiss: () -> Unit, onSave: (Note) -> Unit, noteToEdit: 
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Data realizada: $performedAt", color = TextoPrincipal)
+                    Text("Realizado em: $performedAt", color = TextoPrincipal)
                     IconButton(onClick = {
                         val c = Calendar.getInstance()
                         DatePickerDialog(
@@ -308,7 +310,7 @@ fun CreateNoteDialog(onDismiss: () -> Unit, onSave: (Note) -> Unit, noteToEdit: 
                     }) {
                         Icon(
                             Icons.Default.DateRange,
-                            contentDescription = "Data realizada",
+                            contentDescription = "Realizado em",
                             tint = AzulPrincipal
                         )
                     }
@@ -345,8 +347,8 @@ fun CreateNoteDialog(onDismiss: () -> Unit, onSave: (Note) -> Unit, noteToEdit: 
                         name = name.text,
                         description = description.text,
                         odometer = odometer.text.toIntOrNull() ?: 0,
-                        performedAt = performedAt,
-                        nextDueAt = nextDueAt
+                        performedAt = formatToIsoDate(performedAt),
+                        nextDueAt = formatToIsoDate(nextDueAt)
                     )
                 )
             }) {
@@ -368,3 +370,27 @@ data class Note(
     val performedAt: String,
     val nextDueAt: String
 )
+
+fun formatToIsoDate(input: String): String {
+    return try {
+        val inputFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val date = inputFormatter.parse(input)
+        val outputFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+        outputFormatter.timeZone = TimeZone.getTimeZone("UTC")
+        outputFormatter.format(date!!)
+    } catch (e: Exception) {
+        input
+    }
+}
+
+fun formatFromIsoDate(input: String): String {
+    return try {
+        val isoFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+        isoFormatter.timeZone = TimeZone.getTimeZone("UTC")
+        val date = isoFormatter.parse(input)
+        val displayFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        displayFormatter.format(date!!)
+    } catch (e: Exception) {
+        input
+    }
+}
