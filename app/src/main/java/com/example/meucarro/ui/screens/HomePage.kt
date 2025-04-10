@@ -50,13 +50,18 @@ import androidx.navigation.NavHostController
 import com.example.meucarro.services.database.user_preferences.UserPreferences
 import com.example.meucarro.services.http.RetrofitClient
 import com.example.meucarro.services.http.maintenance.MaintenanceService
+import com.example.meucarro.services.http.maintenance.dto.request.CreateMaintenanceRequest
 import com.example.meucarro.services.worker.testReminderNow
 import com.example.meucarro.ui.theme.AzulPrincipal
 import com.example.meucarro.ui.theme.FundoClaro
 import com.example.meucarro.ui.theme.TextoPrincipal
 import com.example.meucarro.ui.theme.TextoSecundario
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,7 +99,6 @@ fun HomePage(navController: NavHostController) {
             })
         } catch (e: Exception) {
             e.printStackTrace()
-            // você pode exibir um Toast ou Snackbar aqui
         }
     }
 
@@ -156,10 +160,13 @@ fun HomePage(navController: NavHostController) {
                             Text(text = note.description, color = TextoSecundario)
                             Text(text = "Odômetro: ${note.odometer} km", color = TextoSecundario)
                             Text(
-                                text = "Realizado em: ${note.performedAt}",
+                                text = "Realizado em: ${formatFromIsoDate(note.performedAt)}",
                                 color = TextoSecundario
                             )
-                            Text(text = "Próxima em: ${note.nextDueAt}", color = TextoSecundario)
+                            Text(
+                                text = "Próxima em: ${formatFromIsoDate(note.nextDueAt)}",
+                                color = TextoSecundario
+                            )
                             Row(modifier = Modifier.align(Alignment.End)) {
                                 IconButton(onClick = {
                                     noteToEdit = note
@@ -196,12 +203,47 @@ fun HomePage(navController: NavHostController) {
                 noteToEdit = null
             },
             onSave = { newNote ->
-                noteToEdit?.let {
-                    val index = notes.indexOf(it)
-                    if (index != -1) notes[index] = newNote
-                } ?: notes.add(newNote)
-                showDialog = false
-                noteToEdit = null
+                coroutineScope.launch {
+                    try {
+                        // 1. Obter o serviço da API
+                        val service = RetrofitClient.createService(
+                            MaintenanceService::class.java,
+                            context
+                        )
+
+                        // 2. Obter o ID do usuário logado
+                        val maintenanceId = UUID.randomUUID().toString()
+
+                        // 3. Criar o objeto de requisição
+                        val request = CreateMaintenanceRequest(
+                            clientId = maintenanceId,
+                            name = newNote.name,
+                            description = newNote.description,
+                            odometer = newNote.odometer,
+                            performedAt = newNote.performedAt,
+                            nextDueAt = newNote.nextDueAt
+                        )
+
+                        // 4. Chamar a API para criar a manutenção
+                        val response = service.createMaintenance(request)
+
+                        // 5. Adicionar o novo card na lista local
+                        notes.add(
+                            Note(
+                                name = response.name,
+                                description = response.description,
+                                odometer = response.odometer,
+                                performedAt = response.performedAt,
+                                nextDueAt = response.nextDueAt
+                            )
+                        )
+
+                        // 6. Fechar o diálogo
+                        showDialog = false
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
             },
             noteToEdit = noteToEdit
         )
@@ -328,7 +370,7 @@ fun CreateNoteDialog(onDismiss: () -> Unit, onSave: (Note) -> Unit, noteToEdit: 
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Data realizada: $performedAt", color = TextoPrincipal)
+                    Text("Realizado em: $performedAt", color = TextoPrincipal)
                     IconButton(onClick = {
                         val c = Calendar.getInstance()
                         DatePickerDialog(
@@ -341,7 +383,7 @@ fun CreateNoteDialog(onDismiss: () -> Unit, onSave: (Note) -> Unit, noteToEdit: 
                     }) {
                         Icon(
                             Icons.Default.DateRange,
-                            contentDescription = "Data realizada",
+                            contentDescription = "Realizado em",
                             tint = AzulPrincipal
                         )
                     }
@@ -378,8 +420,8 @@ fun CreateNoteDialog(onDismiss: () -> Unit, onSave: (Note) -> Unit, noteToEdit: 
                         name = name.text,
                         description = description.text,
                         odometer = odometer.text.toIntOrNull() ?: 0,
-                        performedAt = performedAt,
-                        nextDueAt = nextDueAt
+                        performedAt = formatToIsoDate(performedAt),
+                        nextDueAt = formatToIsoDate(nextDueAt)
                     )
                 )
             }) {
@@ -401,3 +443,27 @@ data class Note(
     val performedAt: String,
     val nextDueAt: String
 )
+
+fun formatToIsoDate(input: String): String {
+    return try {
+        val inputFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val date = inputFormatter.parse(input)
+        val outputFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+        outputFormatter.timeZone = TimeZone.getTimeZone("UTC")
+        outputFormatter.format(date!!)
+    } catch (e: Exception) {
+        input
+    }
+}
+
+fun formatFromIsoDate(input: String): String {
+    return try {
+        val isoFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+        isoFormatter.timeZone = TimeZone.getTimeZone("UTC")
+        val date = isoFormatter.parse(input)
+        val displayFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        displayFormatter.format(date!!)
+    } catch (e: Exception) {
+        input
+    }
+}
