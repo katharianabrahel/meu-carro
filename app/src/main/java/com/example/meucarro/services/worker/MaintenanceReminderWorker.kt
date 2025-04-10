@@ -51,15 +51,11 @@ class MaintenanceReminderWorker(
                         time = isoFormatter.parse(it.nextDueAt)!!
                     }
 
-                    val fifteenDaysAgo = Calendar.getInstance().apply {
-                        add(Calendar.DAY_OF_YEAR, -15)
-                    }
-
                     val fifteenDaysAhead = Calendar.getInstance().apply {
                         add(Calendar.DAY_OF_YEAR, 15)
                     }
 
-                    !dueDate.before(fifteenDaysAgo) && !dueDate.after(fifteenDaysAhead)
+                    !dueDate.after(fifteenDaysAhead)
                 } catch (e: Exception) {
                     false
                 }
