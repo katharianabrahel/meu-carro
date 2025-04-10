@@ -492,7 +492,7 @@ fun formatToIsoDate(input: String): String {
     return try {
         val inputFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val date = inputFormatter.parse(input)
-        val outputFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+        val outputFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
         outputFormatter.timeZone = TimeZone.getTimeZone("UTC")
         outputFormatter.format(date!!)
     } catch (e: Exception) {
@@ -502,7 +502,7 @@ fun formatToIsoDate(input: String): String {
 
 fun formatFromIsoDate(input: String): String {
     return try {
-        val isoFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+        val isoFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
         isoFormatter.timeZone = TimeZone.getTimeZone("UTC")
         val date = isoFormatter.parse(input)
         val displayFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
