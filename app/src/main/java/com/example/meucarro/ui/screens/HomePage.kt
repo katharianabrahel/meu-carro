@@ -37,6 +37,7 @@ fun HomePage(navController: NavHostController) {
     val context = LocalContext.current
     val userPrefs = remember { UserPreferences(context) }
     val coroutineScope = rememberCoroutineScope()
+    var showLogoutDialog by remember { mutableStateOf(false) }
     var noteToEdit by remember { mutableStateOf<Note?>(null) }
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
 
@@ -76,12 +77,7 @@ fun HomePage(navController: NavHostController) {
                 },
                 actions = {
                     IconButton(onClick = {
-                        coroutineScope.launch {
-                            userPrefs.clear()
-                            navController.navigate("login") {
-                                popUpTo("home") { inclusive = true }
-                            }
-                        }
+                        showLogoutDialog = true
                     }) {
                         Icon(
                             Icons.Default.ExitToApp,
@@ -175,6 +171,32 @@ fun HomePage(navController: NavHostController) {
                 noteToEdit = null
             },
             noteToEdit = noteToEdit
+        )
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Deseja sair?", color = TextoPrincipal) },
+            text = { Text("Você será desconectado da sua conta.", color = TextoPrincipal) },
+            confirmButton = {
+                TextButton(onClick = {
+                    coroutineScope.launch {
+                        userPrefs.clear()
+                        showLogoutDialog = false
+                        navController.navigate("login") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    }
+                }) {
+                    Text("Sair", color = AzulPrincipal)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancelar", color = TextoSecundario)
+                }
+            }
         )
     }
 
