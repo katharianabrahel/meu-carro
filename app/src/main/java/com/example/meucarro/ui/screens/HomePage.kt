@@ -23,6 +23,9 @@ import androidx.navigation.NavHostController
 import com.example.meucarro.services.http.RetrofitClient
 import com.example.meucarro.services.http.maintenance.MaintenanceService
 import com.example.meucarro.ui.theme.*
+import androidx.compose.material.icons.filled.ExitToApp
+import com.example.meucarro.services.database.user_preferences.UserPreferences
+import kotlinx.coroutines.launch
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +35,8 @@ fun HomePage(navController: NavHostController) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     val notes = remember { mutableStateListOf<Note>() }
     val context = LocalContext.current
+    val userPrefs = remember { UserPreferences(context) }
+    val coroutineScope = rememberCoroutineScope()
     var noteToEdit by remember { mutableStateOf<Note?>(null) }
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
 
@@ -68,6 +73,22 @@ fun HomePage(navController: NavHostController) {
                         text = "Meu Carro",
                         color = TextoPrincipal
                     )
+                },
+                actions = {
+                    IconButton(onClick = {
+                        coroutineScope.launch {
+                            userPrefs.clear()
+                            navController.navigate("login") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        }
+                    }) {
+                        Icon(
+                            Icons.Default.ExitToApp,
+                            contentDescription = "Sair",
+                            tint = TextoPrincipal
+                        )
+                    }
                 }
             )
         },
