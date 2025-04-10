@@ -25,6 +25,7 @@ import com.example.meucarro.services.http.maintenance.MaintenanceService
 import com.example.meucarro.ui.theme.*
 import androidx.compose.material.icons.filled.ExitToApp
 import com.example.meucarro.services.database.user_preferences.UserPreferences
+import com.example.meucarro.services.http.maintenance.dto.request.CreateMaintenanceRequest
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -165,12 +166,47 @@ fun HomePage(navController: NavHostController) {
                 noteToEdit = null
             },
             onSave = { newNote ->
-                noteToEdit?.let {
-                    val index = notes.indexOf(it)
-                    if (index != -1) notes[index] = newNote
-                } ?: notes.add(newNote)
-                showDialog = false
-                noteToEdit = null
+                coroutineScope.launch {
+                    try {
+                        // 1. Obter o serviço da API
+                        val service = RetrofitClient.createService(
+                            MaintenanceService::class.java,
+                            context
+                        )
+
+                        // 2. Obter o ID do usuário logado
+                        val userId = userPrefs.getUserId() ?: ""
+
+                        // 3. Criar o objeto de requisição
+                        val request = CreateMaintenanceRequest(
+                            clientId = userId,
+                            name = newNote.name,
+                            description = newNote.description,
+                            odometer = newNote.odometer,
+                            performedAt = newNote.performedAt,
+                            nextDueAt = newNote.nextDueAt
+                        )
+
+                        // 4. Chamar a API para criar a manutenção
+                        val response = service.createMaintenance(request)
+
+                        // 5. Adicionar o novo card na lista local
+                        notes.add(
+                            Note(
+                                name = response.name,
+                                description = response.description,
+                                odometer = response.odometer,
+                                performedAt = response.performedAt,
+                                nextDueAt = response.nextDueAt
+                            )
+                        )
+
+                        // 6. Fechar o diálogo
+                        showDialog = false
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
             },
             noteToEdit = noteToEdit
         )
