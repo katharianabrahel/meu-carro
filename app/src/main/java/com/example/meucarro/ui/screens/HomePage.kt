@@ -175,11 +175,11 @@ fun HomePage(navController: NavHostController) {
                         )
 
                         // 2. Obter o ID do usuário logado
-                        val userId = userPrefs.getUserId() ?: ""
+                        val maintenanceId = UUID.randomUUID().toString()
 
                         // 3. Criar o objeto de requisição
                         val request = CreateMaintenanceRequest(
-                            clientId = userId,
+                            clientId = maintenanceId,
                             name = newNote.name,
                             description = newNote.description,
                             odometer = newNote.odometer,
