@@ -34,6 +34,10 @@ import com.example.meucarro.services.database.user_preferences.UserPreferences
 import com.example.meucarro.services.http.RetrofitClient
 import com.example.meucarro.services.http.auth.AuthService
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 
 @Composable
 fun LoginScreen(
@@ -45,103 +49,118 @@ fun LoginScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val userPrefs = remember { UserPreferences(context) }
+    val focusManager = LocalFocusManager.current
 
-    Column(
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(vertical = 16.dp),
-        verticalArrangement = Arrangement.SpaceEvenly
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            }
+            .padding(vertical = 16.dp)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Meu Carro",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF111418),
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp)
-            )
-
-            Text(
-                text = "Bem vindo!",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF111418),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
-
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Endereço de email") },
-                placeholder = { Text("Digite seu endereço de email") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            )
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Senha") },
-                placeholder = { Text("Digite sua senha") },
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            )
-        }
-
-        Column(modifier = Modifier.padding(16.dp)) {
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        try {
-                            val api = RetrofitClient.createService(AuthService::class.java, context)
-                            val response = api.login(LoginResquest(email, password))
-
-                            // salva token e userId
-                            userPrefs.saveUser(response.token, response.user.id)
-
-                            onLoginSuccess()
-
-                        } catch (e: Exception) {
-                            Toast
-                                .makeText(context, "Erro ao fazer login", Toast.LENGTH_SHORT)
-                                .show()
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1980E6))
-            ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(vertical = 16.dp),
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Login",
-                    color = Color.White,
+                    text = "Meu Carro",
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    color = Color(0xFF111418),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                )
+
+                Text(
+                    text = "Bem vindo!",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF111418),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Endereço de email") },
+                    placeholder = { Text("Digite seu endereço de email") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                )
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Senha") },
+                    placeholder = { Text("Digite sua senha") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
                 )
             }
 
-            TextButton(
-                onClick = onSignUpClick,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    "Não tem uma conta? Cadastre-se.",
-                    color = Color(0xFF637588),
-                    fontSize = 14.sp,
+            Column(modifier = Modifier.padding(16.dp)) {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            try {
+                                val api =
+                                    RetrofitClient.createService(AuthService::class.java, context)
+                                val response = api.login(LoginResquest(email, password))
+
+                                // salva token e userId
+                                userPrefs.saveUser(response.token, response.user.id)
+
+                                onLoginSuccess()
+
+                            } catch (e: Exception) {
+                                Toast
+                                    .makeText(context, "Erro ao fazer login", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 12.dp)
-                )
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1980E6))
+                ) {
+                    Text(
+                        text = "Login",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
+
+                TextButton(
+                    onClick = onSignUpClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "Não tem uma conta? Cadastre-se.",
+                        color = Color(0xFF637588),
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp)
+                    )
+                }
             }
         }
     }

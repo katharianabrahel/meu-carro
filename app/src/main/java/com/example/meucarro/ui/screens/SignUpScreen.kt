@@ -3,22 +3,40 @@ package com.example.meucarro.ui.screens
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.meucarro.services.http.auth.dto.request.UserRequest
 import com.example.meucarro.services.http.RetrofitClient
 import com.example.meucarro.services.http.auth.AuthService
+import com.example.meucarro.services.http.auth.dto.request.UserRequest
 import kotlinx.coroutines.launch
 
 
@@ -57,139 +75,153 @@ fun SignUpScreen(onSignUpSuccess: () -> Unit) {
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     Scaffold { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(Color.White)
-                .padding(vertical = 16.dp),
-            verticalArrangement = Arrangement.SpaceEvenly
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                    })
+                }
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "Meu Carro",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF111418),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp)
-                )
-
-                Text(
-                    text = "Criar Conta",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF111418),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
-
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nome") },
-                    placeholder = { Text("Digite seu nome") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                )
-
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Endereço de email") },
-                    placeholder = { Text("Digite seu endereço de email") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                )
-
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Criar senha") },
-                    placeholder = { Text("Escolha sua senha") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                )
-
-                OutlinedTextField(
-                    value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
-                    label = { Text("Confirmar senha") },
-                    placeholder = { Text("Confirme sua senha") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                )
-
-                Text(
-                    text = "Ao criar uma conta, você concorda com nossos termos.",
-                    fontSize = 14.sp,
-                    color = Color(0xFF637588),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 12.dp, start = 16.dp, end = 16.dp)
-                )
-            }
-
-            Column(modifier = Modifier.padding(16.dp)) {
-                Button(
-                    onClick = {
-                        coroutineScope.launch {
-                            if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
-                                Toast.makeText(
-                                    context,
-                                    "Preencha todos os campos.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                return@launch
-                            }
-
-                            if (password != confirmPassword) {
-                                Toast.makeText(
-                                    context,
-                                    "As senhas não coincidem.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                return@launch
-                            }
-
-                            val result = createUser(context, name, email, password, confirmPassword)
-                            result.onSuccess {
-                                Toast.makeText(
-                                    context,
-                                    "Conta criada com sucesso!",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                onSignUpSuccess()
-                            }.onFailure { e ->
-                                Toast.makeText(
-                                    context,
-                                    "Erro ao criar conta: ${e.localizedMessage}",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1980E6))
-                ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(Color.White)
+                    .padding(vertical = 16.dp),
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Criar conta",
-                        color = Color.White,
+                        text = "Meu Carro",
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        color = Color(0xFF111418),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 12.dp)
                     )
+
+                    Text(
+                        text = "Criar Conta",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF111418),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Nome") },
+                        placeholder = { Text("Digite seu nome") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Endereço de email") },
+                        placeholder = { Text("Digite seu endereço de email") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Criar senha") },
+                        placeholder = { Text("Escolha sua senha") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Confirmar senha") },
+                        placeholder = { Text("Confirme sua senha") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    )
+
+                    Text(
+                        text = "Ao criar uma conta, você concorda com nossos termos.",
+                        fontSize = 14.sp,
+                        color = Color(0xFF637588),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 12.dp, start = 16.dp, end = 16.dp)
+                    )
+                }
+
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+                                    Toast.makeText(
+                                        context,
+                                        "Preencha todos os campos.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    return@launch
+                                }
+
+                                if (password != confirmPassword) {
+                                    Toast.makeText(
+                                        context,
+                                        "As senhas não coincidem.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    return@launch
+                                }
+
+                                val result =
+                                    createUser(context, name, email, password, confirmPassword)
+                                result.onSuccess {
+                                    Toast.makeText(
+                                        context,
+                                        "Conta criada com sucesso!",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    onSignUpSuccess()
+                                }.onFailure { e ->
+                                    Toast.makeText(
+                                        context,
+                                        "Erro ao criar conta: ${e.localizedMessage}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1980E6))
+                    ) {
+                        Text(
+                            text = "Criar conta",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
             }
         }
