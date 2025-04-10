@@ -90,6 +90,7 @@ fun HomePage(navController: NavHostController) {
             notes.clear()
             notes.addAll(response.map {
                 Note(
+                    id = it.id,
                     name = it.name,
                     description = it.description,
                     odometer = it.odometer,
@@ -205,41 +206,62 @@ fun HomePage(navController: NavHostController) {
             onSave = { newNote ->
                 coroutineScope.launch {
                     try {
-                        // 1. Obter o serviço da API
                         val service = RetrofitClient.createService(
                             MaintenanceService::class.java,
                             context
                         )
 
-                        // 2. Obter o ID do usuário logado
-                        val maintenanceId = UUID.randomUUID().toString()
-
-                        // 3. Criar o objeto de requisição
-                        val request = CreateMaintenanceRequest(
-                            clientId = maintenanceId,
-                            name = newNote.name,
-                            description = newNote.description,
-                            odometer = newNote.odometer,
-                            performedAt = newNote.performedAt,
-                            nextDueAt = newNote.nextDueAt
-                        )
-
-                        // 4. Chamar a API para criar a manutenção
-                        val response = service.createMaintenance(request)
-
-                        // 5. Adicionar o novo card na lista local
-                        notes.add(
-                            Note(
-                                name = response.name,
-                                description = response.description,
-                                odometer = response.odometer,
-                                performedAt = response.performedAt,
-                                nextDueAt = response.nextDueAt
+                        if (noteToEdit != null) {
+                            val response = service.updateMaintenance(
+                                noteToEdit!!.id!!,
+                                CreateMaintenanceRequest(
+                                    clientId = noteToEdit!!.id!!,
+                                    name = newNote.name,
+                                    description = newNote.description,
+                                    odometer = newNote.odometer,
+                                    performedAt = newNote.performedAt,
+                                    nextDueAt = newNote.nextDueAt
+                                )
                             )
-                        )
 
-                        // 6. Fechar o diálogo
+                            val index = notes.indexOfFirst { it.id == noteToEdit!!.id }
+                            if (index != -1) {
+                                notes[index] = Note(
+                                    id = response.id,
+                                    name = response.name,
+                                    description = response.description,
+                                    odometer = response.odometer,
+                                    performedAt = response.performedAt,
+                                    nextDueAt = response.nextDueAt
+                                )
+                            }
+                        } else {
+                            val maintenanceId = UUID.randomUUID().toString()
+                            val response = service.createMaintenance(
+                                CreateMaintenanceRequest(
+                                    clientId = maintenanceId,
+                                    name = newNote.name,
+                                    description = newNote.description,
+                                    odometer = newNote.odometer,
+                                    performedAt = newNote.performedAt,
+                                    nextDueAt = newNote.nextDueAt
+                                )
+                            )
+
+                            notes.add(
+                                Note(
+                                    id = response.id,
+                                    name = response.name,
+                                    description = response.description,
+                                    odometer = response.odometer,
+                                    performedAt = response.performedAt,
+                                    nextDueAt = response.nextDueAt
+                                )
+                            )
+                        }
+
                         showDialog = false
+                        noteToEdit = null
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -437,6 +459,7 @@ fun CreateNoteDialog(onDismiss: () -> Unit, onSave: (Note) -> Unit, noteToEdit: 
 }
 
 data class Note(
+    val id: String? = null,
     val name: String,
     val description: String,
     val odometer: Int,
