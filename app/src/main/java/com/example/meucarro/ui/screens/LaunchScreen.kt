@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import com.example.meucarro.services.database.user_preferences.UserPreferences
+import com.example.meucarro.services.worker.scheduleReminder
 
 @Composable
 fun LaunchScreen(navController: NavHostController) {
@@ -25,6 +26,7 @@ fun LaunchScreen(navController: NavHostController) {
         val token = userPrefs.getToken()
         isChecking.value = false
         if (!token.isNullOrBlank()) {
+            scheduleReminder(context)
             navController.navigate("home") {
                 popUpTo("launch") { inclusive = true }
             }
