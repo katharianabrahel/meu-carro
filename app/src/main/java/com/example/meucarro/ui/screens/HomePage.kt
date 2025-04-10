@@ -4,8 +4,10 @@ import android.app.DatePickerDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -191,7 +193,11 @@ fun HomePage(navController: NavHostController) {
                                 }
                             }
                         }
+
                     }
+                }
+                item {
+                    Spacer(modifier = Modifier.height(66.dp))
                 }
             }
         }
@@ -310,9 +316,24 @@ fun HomePage(navController: NavHostController) {
             },
             confirmButton = {
                 TextButton(onClick = {
-                    notes.remove(noteToDelete)
-                    noteToDelete = null
-                    showDeleteDialog = false
+                    coroutineScope.launch {
+                        try {
+                            val service = RetrofitClient.createService(
+                                MaintenanceService::class.java,
+                                context
+                            )
+
+                            noteToDelete?.id?.let { id ->
+                                service.deleteMaintenance(id)
+                                notes.remove(noteToDelete)
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        } finally {
+                            noteToDelete = null
+                            showDeleteDialog = false
+                        }
+                    }
                 }) {
                     Text("Excluir", color = Color.Blue)
                 }

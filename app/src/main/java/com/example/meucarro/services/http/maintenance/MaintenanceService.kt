@@ -3,6 +3,7 @@ package com.example.meucarro.services.http.maintenance
 import com.example.meucarro.services.http.maintenance.dto.request.CreateMaintenanceRequest
 import com.example.meucarro.services.http.maintenance.dto.response.MaintenanceResponse
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -27,4 +28,9 @@ interface MaintenanceService {
         @Path("id") id: String,
         @Body maintenanceRequest: CreateMaintenanceRequest
     ): MaintenanceResponse
+
+    @DELETE("maintences/{id}")
+    suspend fun deleteMaintenance(
+        @Path("id") id: String
+    )
 }
