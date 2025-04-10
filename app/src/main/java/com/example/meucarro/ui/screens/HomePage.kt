@@ -361,8 +361,17 @@ fun CreateNoteDialog(onDismiss: () -> Unit, onSave: (Note) -> Unit, noteToEdit: 
             )
         )
     }
-    var performedAt by remember { mutableStateOf(noteToEdit?.performedAt ?: "") }
-    var nextDueAt by remember { mutableStateOf(noteToEdit?.nextDueAt ?: "") }
+    var performedAt by remember {
+        mutableStateOf(
+            noteToEdit?.performedAt?.let { formatFromIsoDate(it) } ?: ""
+        )
+    }
+
+    var nextDueAt by remember {
+        mutableStateOf(
+            noteToEdit?.nextDueAt?.let { formatFromIsoDate(it) } ?: ""
+        )
+    }
     val context = LocalContext.current
 
     AlertDialog(
