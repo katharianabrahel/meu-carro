@@ -60,6 +60,8 @@ import com.example.meucarro.ui.theme.AzulPrincipal
 import com.example.meucarro.ui.theme.FundoClaro
 import com.example.meucarro.ui.theme.TextoPrincipal
 import com.example.meucarro.ui.theme.TextoSecundario
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -79,6 +81,7 @@ fun HomePage(navController: NavHostController) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     var noteToEdit by remember { mutableStateOf<Note?>(null) }
     var noteToDelete by remember { mutableStateOf<Note?>(null) }
+    val isRefreshing = remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         testReminderNow(context)
@@ -104,6 +107,31 @@ fun HomePage(navController: NavHostController) {
             })
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    fun refreshMaintenances() {
+        coroutineScope.launch {
+            isRefreshing.value = true
+            try {
+                val service = RetrofitClient.createService(MaintenanceService::class.java, context)
+                val response = service.getMaintenances()
+                notes.clear()
+                notes.addAll(response.map {
+                    Note(
+                        id = it.id,
+                        name = it.name,
+                        description = it.description,
+                        odometer = it.odometer,
+                        performedAt = it.performedAt,
+                        nextDueAt = it.nextDueAt
+                    )
+                })
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isRefreshing.value = false
+            }
         }
     }
 
@@ -143,66 +171,74 @@ fun HomePage(navController: NavHostController) {
             modifier = Modifier.padding(padding),
             color = FundoClaro
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(isRefreshing.value),
+                onRefresh = { refreshMaintenances() }
             ) {
-                items(notes) { note ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(4.dp)
-                    ) {
-                        Column(Modifier.padding(16.dp)) {
-                            Text(
-                                text = note.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = TextoPrincipal
-                            )
-                            Text(text = note.description, color = TextoSecundario)
-                            Text(text = "Odômetro: ${note.odometer} km", color = TextoSecundario)
-                            Text(
-                                text = "Realizado em: ${formatFromIsoDate(note.performedAt)}",
-                                color = TextoSecundario
-                            )
-                            Text(
-                                text = "Próxima em: ${formatFromIsoDate(note.nextDueAt)}",
-                                color = TextoSecundario
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                IconButton(onClick = {
-                                    noteToEdit = note
-                                    showDialog = true
-                                }) {
-                                    Icon(
-                                        Icons.Default.Edit,
-                                        contentDescription = "Editar",
-                                        tint = AzulPrincipal
-                                    )
-                                }
-                                IconButton(onClick = {
-                                    noteToDelete = note
-                                    showDeleteDialog = true
-                                }) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = "Excluir",
-                                        tint = TextoSecundario
-                                    )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    items(notes) { note ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(4.dp)
+                        ) {
+                            Column(Modifier.padding(16.dp)) {
+                                Text(
+                                    text = note.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = TextoPrincipal
+                                )
+                                Text(text = note.description, color = TextoSecundario)
+                                Text(
+                                    text = "Odômetro: ${note.odometer} km",
+                                    color = TextoSecundario
+                                )
+                                Text(
+                                    text = "Realizado em: ${formatFromIsoDate(note.performedAt)}",
+                                    color = TextoSecundario
+                                )
+                                Text(
+                                    text = "Próxima em: ${formatFromIsoDate(note.nextDueAt)}",
+                                    color = TextoSecundario
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    IconButton(onClick = {
+                                        noteToEdit = note
+                                        showDialog = true
+                                    }) {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = "Editar",
+                                            tint = AzulPrincipal
+                                        )
+                                    }
+                                    IconButton(onClick = {
+                                        noteToDelete = note
+                                        showDeleteDialog = true
+                                    }) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Excluir",
+                                            tint = TextoSecundario
+                                        )
+                                    }
                                 }
                             }
-                        }
 
+                        }
                     }
-                }
-                item {
-                    Spacer(modifier = Modifier.height(66.dp))
+                    item {
+                        Spacer(modifier = Modifier.height(66.dp))
+                    }
                 }
             }
         }
